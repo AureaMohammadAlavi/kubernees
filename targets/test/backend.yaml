@@ -5,6 +5,8 @@ metadata:
   namespace: test
   labels:
     app: backend
+    tags.datadoghq.com/env: "test"
+    tags.datadoghq.com/version: "1.0.1"    
 spec:
   replicas: 1
   revisionHistoryLimit: 10
@@ -22,10 +24,33 @@ spec:
         app: backend
     spec:
       containers:
-      - image: smash1986/backend:latest
+      - image: smash1986/backend:main
         name: backend
         ports:
         - containerPort: 8081
+          name: rest
+        - containerPort: 4000
+          name: grapql
+        env:
+          - name: DD_AGENT_HOST
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: DD_ENV
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['tags.datadoghq.com/env']
+          - name: DD_VERSION
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['tags.datadoghq.com/version']
+          - name: DD_PROFILING_ENABLED
+            value: "true"
+          - name: DD_LOGS_INJECTION
+            value: "true"
+          - name: DD_TRACE_SAMPLE_RATE
+            value: "1"
+
       restartPolicy: Always
 
 ---
@@ -40,8 +65,13 @@ metadata:
 spec:
   ports:
   - port: 80
+    name: rest
     protocol: TCP
     targetPort: 8081
+  - port: 8080
+    name: graphql
+    protocol: TCP
+    targetPort: 4000
   selector:
     app: backend
   sessionAffinity: None
