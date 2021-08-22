@@ -4,3 +4,4 @@ resources:
 - ns.yaml
 - backend.yaml
 - frontend.yaml
+- CronJob.yaml
